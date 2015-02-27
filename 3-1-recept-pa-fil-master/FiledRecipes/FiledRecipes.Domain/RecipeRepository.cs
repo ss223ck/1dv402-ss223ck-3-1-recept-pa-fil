@@ -131,13 +131,13 @@ namespace FiledRecipes.Domain
         {
             using (StreamWriter writeRecipeFile = new StreamWriter(_path))
             {
-                foreach (Recipe r in _recipes)
+                foreach (IRecipe r in _recipes)
                 {
                     writeRecipeFile.WriteLine(SectionRecipe);
                     writeRecipeFile.WriteLine(r.Name);
                     writeRecipeFile.WriteLine(SectionIngredients);
 
-                    foreach (Ingredient ingredient in r.Ingredients)
+                    foreach (IIngredient ingredient in r.Ingredients)
                     {
                         string writeFileLine = string.Join(";", ingredient.Amount, ingredient.Measure, ingredient.Name );
                         writeRecipeFile.WriteLine(writeFileLine);
@@ -162,65 +162,57 @@ namespace FiledRecipes.Domain
 
             using (StreamReader readRecipes = new StreamReader(_path))
             {
-                do
+                while ((lineFromRecipe = readRecipes.ReadLine()) != null)
                 {
-                    while (lineFromRecipe == "") 
+                    if (!String.IsNullOrWhiteSpace(lineFromRecipe))
                     {
-                        lineFromRecipe = readRecipes.ReadLine();
-                    } 
-
-                    if (lineFromRecipe == SectionRecipe)
-                    {
-                        statusOfNextLine = RecipeReadStatus.New;
-                        lineFromRecipe = readRecipes.ReadLine();
-                    }
-                    else if (lineFromRecipe == SectionIngredients)
-                    {
-                        statusOfNextLine = RecipeReadStatus.Ingredient;
-                        lineFromRecipe = readRecipes.ReadLine();
-                    }
-                    else if (lineFromRecipe == SectionInstructions)
-                    {
-                        statusOfNextLine = RecipeReadStatus.Instruction;
-                        lineFromRecipe = readRecipes.ReadLine();
-                    }
-
-                    if (statusOfNextLine == RecipeReadStatus.New || statusOfNextLine == RecipeReadStatus.Instruction || statusOfNextLine == RecipeReadStatus.Ingredient)
-                    {
-                        if (statusOfNextLine == RecipeReadStatus.New)
+                        if (lineFromRecipe == SectionRecipe)
                         {
-                            recipeForList = new Recipe(lineFromRecipe);
-                            loadList.Add(recipeForList);
+                            statusOfNextLine = RecipeReadStatus.New;
+                            lineFromRecipe = readRecipes.ReadLine();
                         }
-                        else if (statusOfNextLine == RecipeReadStatus.Ingredient)
+                        else if (lineFromRecipe == SectionIngredients)
                         {
-                            string[] ingredientsFromRecipe = lineFromRecipe.Split(';');
-                            if (ingredientsFromRecipe.Length != 3)
-                            {
-                                throw new FileFormatException();
-                            }
-                            Ingredient ingredient = new Ingredient();
-                            ingredient.Name = ingredientsFromRecipe[2];
-                            ingredient.Measure = ingredientsFromRecipe[1];
-                            ingredient.Amount = ingredientsFromRecipe[0];
-
-                            recipeForList.Add(ingredient);
+                            statusOfNextLine = RecipeReadStatus.Ingredient;
+                            lineFromRecipe = readRecipes.ReadLine();
                         }
-                        else if (statusOfNextLine == RecipeReadStatus.Instruction)
+                        else if (lineFromRecipe == SectionInstructions)
                         {
-                            recipeForList.Add(lineFromRecipe);
+                            statusOfNextLine = RecipeReadStatus.Instruction;
+                            lineFromRecipe = readRecipes.ReadLine();
                         }
                         else
                         {
-                            throw new FileFormatException();
+                            if (statusOfNextLine == RecipeReadStatus.New)
+                            {
+                                recipeForList = new Recipe(lineFromRecipe);
+                                loadList.Add(recipeForList);
+                            }
+                            else if (statusOfNextLine == RecipeReadStatus.Ingredient)
+                            {
+                                string[] ingredientsFromRecipe = lineFromRecipe.Split(';');
+                                if (ingredientsFromRecipe.Length != 3)
+                                {
+                                    throw new FileFormatException();
+                                }
+                                Ingredient ingredient = new Ingredient();
+                                ingredient.Name = ingredientsFromRecipe[2];
+                                ingredient.Measure = ingredientsFromRecipe[1];
+                                ingredient.Amount = ingredientsFromRecipe[0];
+
+                                recipeForList.Add(ingredient);
+                            }
+                            else if (statusOfNextLine == RecipeReadStatus.Instruction)
+                            {
+                                recipeForList.Add(lineFromRecipe);
+                            }
+                            else
+                            {
+                                throw new FileFormatException();
+                            }
                         }
                     }
-                    lineFromRecipe = readRecipes.ReadLine();
-                    while (lineFromRecipe == "") 
-                    {
-                        lineFromRecipe = readRecipes.ReadLine();
-                    } 
-                } while (lineFromRecipe != null );
+                }
             }
             loadList.Sort();
             _recipes = loadList;

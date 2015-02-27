@@ -23,7 +23,7 @@ namespace FiledRecipes.Views
             Console.WriteLine();
             Console.WriteLine("Ingredienser");
             Console.WriteLine("============");
-            foreach (Ingredient i in recipe.Ingredients)
+            foreach (IIngredient i in recipe.Ingredients)
             {
                 Console.WriteLine(i);
             }
@@ -41,7 +41,7 @@ namespace FiledRecipes.Views
         }
         public void Show(IEnumerable<IRecipe> recipes)
         {
-            foreach (Recipe r in recipes)
+            foreach (IRecipe r in recipes)
             {
                 Show(r);
                 ContinueOnKeyPressed();
